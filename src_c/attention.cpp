@@ -30,22 +30,6 @@ Tensor3D reshape_2D_to_3D(const std::vector<std::vector<float>> &input, size_t n
     return output;
 }
 
-// Tensor3D reshape_2D_to_3D(const std::vector<std::vector<float>> &input, size_t num_heads, size_t seq_len, size_t head_dim) {
-//     Tensor3D output(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
-
-//     size_t index = 0;
-//     for (size_t h = 0; h < num_heads; ++h) {
-//         for (size_t s = 0; s < seq_len; ++s) {
-//             for (size_t d = 0; d < head_dim; ++d) {
-//                 output[h][s][d] = input[s][index];  // Adjust based on data layout
-//             }
-//             ++index;
-//         }
-//     }
-
-//     return output;
-// }
-
 // Transpose last two dimensions for the K matrix
 // Converts [num_heads, seq_len, head_dim] -> [num_heads, head_dim, seq_len]
 Tensor3D transpose_last_two_dims(const Tensor3D &input) {
