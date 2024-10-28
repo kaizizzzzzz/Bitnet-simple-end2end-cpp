@@ -54,12 +54,19 @@ int main() {
         auto v_weights = readPackedWeights(dir_name + "/v_weight.bin", hidden_size, hidden_size / 4);
         auto o_weights = readPackedWeights(dir_name + "/o_weight.bin", hidden_size, hidden_size / 4);
 
+        // Read scaling factor
+        float q_scale = readScale(dir_name + "/q_weight_scale.bin");
+        float k_scale = readScale(dir_name + "/k_weight_scale.bin");
+        float v_scale = readScale(dir_name + "/v_weight_scale.bin");
+        float o_scale = readScale(dir_name + "/o_weight_scale.bin");
+
         // Read inv_freq and ln_weight
         auto inv_freq = read1DArray(dir_name + "/inv_freq.bin", head_dim / 2);
         auto ln_weight = read1DArray(dir_name + "/ln_weight.bin", hidden_size);
 
         // Call the attention function
-        auto result = bitnet_attention(hidden_states, q_weights, k_weights, v_weights, o_weights, inv_freq, ln_weight,
+        auto result = bitnet_attention(hidden_states, q_weights, k_weights, v_weights, o_weights, 
+                                       q_scale, k_scale, v_scale, o_scale, inv_freq, ln_weight,
                                        hidden_size, num_heads, head_dim, seq_len);
 
         //Read the golden result from the golden_result folder

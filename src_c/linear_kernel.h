@@ -52,6 +52,7 @@ int8_t extract_weight_col(uint8_t packed_weight, int index) {
 std::vector<std::vector<float>> linear_forward_no_mul(const std::vector<std::vector<int8_t>> &input,
                                                       const std::vector<float> scales,
                                                       const std::vector<std::vector<uint8_t>> &packed_weight_col,
+                                                      const float w_scale,  
                                                       size_t weight_cols
                                                       ) {
     size_t input_rows = input.size();
@@ -82,7 +83,7 @@ std::vector<std::vector<float>> linear_forward_no_mul(const std::vector<std::vec
             }
 
             // Dequantize the output by dividing by the scale
-            output[i][j] /= scales[i];
+            output[i][j] /= (scales[i] * w_scale);
         }
     }
 

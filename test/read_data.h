@@ -30,3 +30,11 @@ std::vector<float> read1DArray(const std::string &filepath, size_t size) {
     file.read(reinterpret_cast<char*>(data.data()), size * sizeof(float));
     return data;
 }
+
+// Helper function to read a single float scale from a binary file
+float readScale(const std::string &filepath) {
+    std::ifstream file(filepath, std::ios::binary);
+    float scale;
+    file.read(reinterpret_cast<char*>(&scale), sizeof(float));
+    return scale;
+}
