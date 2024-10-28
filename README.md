@@ -19,7 +19,7 @@ This repository contains a simplified C++ implementation of the attention mechan
    cd Bitnet-attn
 2. **Compile the Code:**
     ```bash
-g++ -std=c++11 -Wall -Wextra -Werror -fsanitize=address -g -I./src_c -I./test -o testbench ./src_c/attention.cpp ./test/testbench.cpp
+    g++ -std=c++11 -Wall -Wextra -Werror -fsanitize=address -g -I./src_c -I./test -o testbench ./src_c/attention.cpp ./test/testbench.cpp
 3. **Run the Testbench:**
     ```bash
-./testbench
+    ./testbench
