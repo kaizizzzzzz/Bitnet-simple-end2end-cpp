@@ -1,6 +1,6 @@
 # Bitnet-attn
 
-This repository contains a simplified C++ implementation of the attention mechanism for the `1bitLLM/bitnet_b1_58-large` model. This version uses quantization techniques and random weight initialization to provide a basic framework without the complex optimization for specific CPU Architecture 
+This repository contains a simplified C++ implementation of the attention mechanism for the [`1bitLLM/bitnet_b1_58-large`](https://huggingface.co/1bitLLM/bitnet_b1_58-large/tree/main) model. This version uses quantization techniques and random weight initialization to provide a basic framework without the complex optimization for specific CPU Architecture 
 
 ## Key Features
 - **Attention Mechanism without Multiplication:** Implements core bitnet-attention logic without traditional multiplication.
