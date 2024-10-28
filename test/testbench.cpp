@@ -5,23 +5,6 @@
 #include <vector>
 #include <string>
 
-// Function to save a 2D vector result as a binary file
-void saveResult(const std::string &file_path, const std::vector<std::vector<float>> &result) {
-    std::ofstream out_file(file_path, std::ios::binary);
-    if (!out_file) {
-        std::cerr << "Error opening file for saving: " << file_path << std::endl;
-        return;
-    }
-
-    // Iterate through each row and save the elements as binary data
-    for (const auto &row : result) {
-        out_file.write(reinterpret_cast<const char *>(row.data()), row.size() * sizeof(float));
-    }
-
-    out_file.close();
-    std::cout << "Saved result to " << file_path << std::endl;
-}
-
 std::vector<std::vector<float>> readResult(const std::string &file_path, size_t rows, size_t cols) {
     std::vector<std::vector<float>> result(rows, std::vector<float>(cols, 0.0f));
     std::ifstream in_file(file_path, std::ios::binary);
@@ -78,12 +61,8 @@ int main() {
         // Call the attention function
         auto result = bitnet_attention(hidden_states, q_weights, k_weights, v_weights, o_weights, inv_freq, ln_weight,
                                        hidden_size, num_heads, head_dim, seq_len);
-        
-        // // Save the result in the golden_result folder
-        // std::string result_file = "data/golden_results/result_" + std::to_string(set_idx) + ".bin";
-        // saveResult(result_file, result);
 
-        // Read the golden result from the golden_result folder
+        //Read the golden result from the golden_result folder
         std::string result_file = "data/golden_results/result_" + std::to_string(set_idx) + ".bin";
         auto golden_result = readResult(result_file, seq_len, hidden_size);
 

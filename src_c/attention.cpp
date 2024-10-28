@@ -13,18 +13,38 @@ using Tensor3D = std::vector<std::vector<std::vector<float>>>;
 Tensor3D reshape_2D_to_3D(const std::vector<std::vector<float>> &input, size_t num_heads, size_t seq_len, size_t head_dim) {
     Tensor3D output(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
 
-    size_t index = 0;
-    for (size_t h = 0; h < num_heads; ++h) {
-        for (size_t s = 0; s < seq_len; ++s) {
+    // Ensure the input matrix has the expected dimensions
+    if (input.size() != seq_len || input[0].size() != num_heads * head_dim) {
+        throw std::runtime_error("Input dimensions do not match the expected [seq_len, num_heads * head_dim]");
+    }
+
+    // Correctly iterate through the input matrix to fill the 3D tensor
+    for (size_t s = 0; s < seq_len; ++s) {
+        for (size_t h = 0; h < num_heads; ++h) {
             for (size_t d = 0; d < head_dim; ++d) {
-                output[h][s][d] = input[s][index];  // Adjust based on data layout
+                output[h][s][d] = input[s][h * head_dim + d];
             }
-            ++index;
         }
     }
 
     return output;
 }
+
+// Tensor3D reshape_2D_to_3D(const std::vector<std::vector<float>> &input, size_t num_heads, size_t seq_len, size_t head_dim) {
+//     Tensor3D output(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
+
+//     size_t index = 0;
+//     for (size_t h = 0; h < num_heads; ++h) {
+//         for (size_t s = 0; s < seq_len; ++s) {
+//             for (size_t d = 0; d < head_dim; ++d) {
+//                 output[h][s][d] = input[s][index];  // Adjust based on data layout
+//             }
+//             ++index;
+//         }
+//     }
+
+//     return output;
+// }
 
 // Transpose last two dimensions for the K matrix
 // Converts [num_heads, seq_len, head_dim] -> [num_heads, head_dim, seq_len]
@@ -49,15 +69,33 @@ Tensor3D transpose_last_two_dims(const Tensor3D &input) {
 // Matrix multiplication for 3D tensors
 // This function multiplies tensors of shape [num_heads, seq_len, head_dim] with [num_heads, head_dim, seq_len]
 Tensor3D matmul_3D(const Tensor3D &tensor1, const Tensor3D &tensor2) {
-    size_t num_heads = tensor1.size();
-    size_t seq_len = tensor1[0].size();
-    size_t head_dim = tensor1[0][0].size();
+    // Validate dimensions
+    size_t num_heads1 = tensor1.size();
+    size_t seq_len1 = tensor1[0].size();
+    size_t head_dim1 = tensor1[0][0].size();
 
-    Tensor3D result(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(seq_len, 0.0f)));
+    size_t num_heads2 = tensor2.size();
+    size_t head_dim2 = tensor2[0].size();  // This should match the last dimension of tensor1
+    size_t seq_len2 = tensor2[0][0].size();
 
+    if (num_heads1 != num_heads2) {
+        throw std::runtime_error("Number of heads in tensor1 and tensor2 must match.");
+    }
+    if (head_dim1 != head_dim2) {
+        throw std::runtime_error("Head dimension of tensor1 and head dimension of tensor2 must match.");
+    }
+
+    size_t num_heads = num_heads1;
+    size_t seq_len = seq_len1;
+    size_t head_dim = head_dim1;
+
+    // Initialize result tensor with the correct dimensions
+    Tensor3D result(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(seq_len2, 0.0f)));
+
+    // Perform matrix multiplication
     for (size_t h = 0; h < num_heads; ++h) {
         for (size_t i = 0; i < seq_len; ++i) {
-            for (size_t j = 0; j < seq_len; ++j) {
+            for (size_t j = 0; j < seq_len2; ++j) {
                 for (size_t k = 0; k < head_dim; ++k) {
                     result[h][i][j] += tensor1[h][i][k] * tensor2[h][k][j];
                 }
@@ -123,7 +161,7 @@ void rotary_embedding(const Tensor3D &x, const std::vector<float> &inv_freq, siz
 }
 
 // Apply rotary position embedding to Q and K tensors
-Tensor3D apply_rotary_pos_emb(const Tensor3D &q, const Tensor3D &k, const Tensor3D &cos, const Tensor3D &sin) {
+std::pair<Tensor3D, Tensor3D> apply_rotary_pos_emb(const Tensor3D &q, const Tensor3D &k, const Tensor3D &cos, const Tensor3D &sin) {
     Tensor3D q_embed = q;
     Tensor3D k_embed = k;
 
@@ -143,8 +181,9 @@ Tensor3D apply_rotary_pos_emb(const Tensor3D &q, const Tensor3D &k, const Tensor
         }
     }
 
-    return q_embed;
+    return {q_embed, k_embed};
 }
+
 
 // RMS Normalization function
 std::vector<float> rms_norm(const std::vector<float> &hidden_states, const std::vector<float> &weight, float epsilon = 1e-6) {
@@ -194,26 +233,28 @@ std::vector<std::vector<float>> bitnet_attention(
     std::vector<float> scales = quantized_result.second;
 
     // Step 2: Linear projections for Q, K, V using quantized GEMM (forward_no_mul)
-    std::vector<std::vector<float>> q_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, q_weights, hidden_size, hidden_size);
-    std::vector<std::vector<float>> k_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, k_weights, hidden_size, hidden_size);
-    std::vector<std::vector<float>> v_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, v_weights, hidden_size, hidden_size);
+    std::vector<std::vector<float>> q_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, q_weights, hidden_size);
+    std::vector<std::vector<float>> k_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, k_weights, hidden_size);
+    std::vector<std::vector<float>> v_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, v_weights, hidden_size);
 
     // Reshape Q, K, V for attention calculation
     Tensor3D q_proj = reshape_2D_to_3D(q_proj_re, num_heads, seq_len, head_dim);
     Tensor3D k_proj = reshape_2D_to_3D(k_proj_re, num_heads, seq_len, head_dim);
     Tensor3D v_proj = reshape_2D_to_3D(v_proj_re, num_heads, seq_len, head_dim);
-
+            
     // Step 3: Apply rotary embedding
     Tensor3D cos(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
     Tensor3D sin(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
     rotary_embedding(q_proj, inv_freq, seq_len, cos, sin);
-    q_proj = apply_rotary_pos_emb(q_proj, k_proj, cos, sin);
+    auto q_k_embed_pair = apply_rotary_pos_emb(q_proj, k_proj, cos, sin);
+    Tensor3D q_embed = q_k_embed_pair.first;
+    Tensor3D k_embed = q_k_embed_pair.second;
 
     // Step 4: Transpose K for correct multiplication
-    Tensor3D k_proj_transposed = transpose_last_two_dims(k_proj);
+    Tensor3D k_proj_transposed = transpose_last_two_dims(k_embed);
 
     // Step 5: Calculate attention scores (QK^T) / sqrt(d)
-    auto attn_weights = matmul_3D(q_proj, k_proj_transposed);
+    auto attn_weights = matmul_3D(q_embed, k_proj_transposed);
     float scale_factor = 1.0f / std::sqrt(static_cast<float>(head_dim));
     for (auto &head : attn_weights) {
         for (auto &row : head) {
@@ -261,7 +302,7 @@ std::vector<std::vector<float>> bitnet_attention(
     std::vector<float> final_scales = quantized_final_result.second;
 
 
-    std::vector<std::vector<float>> final_output = linear_forward_no_mul(quantized_final_output, final_scales, o_weights, hidden_size, hidden_size);
+    std::vector<std::vector<float>> final_output = linear_forward_no_mul(quantized_final_output, final_scales, o_weights, hidden_size);
 
     return final_output;
 }
