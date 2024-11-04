@@ -10,14 +10,14 @@
 // Function for Bitnet Attention equivalent in C++
 std::vector<std::vector<float>> bitnet_mlp(
     const std::vector<std::vector<float>> &hidden_states,
-    const std::vector<std::vector<uint8_t>> &mlp1_weights,
-    const std::vector<std::vector<uint8_t>> &mlp2_weights,
+    const std::vector<std::vector<uint8_t>> &gate_weights,
+    const std::vector<std::vector<uint8_t>> &up_weights,
     const std::vector<std::vector<uint8_t>> &mlp3_weights,
     const float mlp1_scale,  // Single scaling factor for mlp1 weights
     const float mlp2_scale,  // Single scaling factor for mlp2 weights
     const float mlp3_scale,  // Single scaling factor for mlp3 weights
     const std::vector<float> &ln_weight, // New: weights for RMSNorm
-    size_t hidden_size, size_t seq_len
+    size_t hidden_size, size_t intermediate_size, size_t seq_len
     ) {
 
     // Step 1: Quantize the input activations for Q, K, V projections
