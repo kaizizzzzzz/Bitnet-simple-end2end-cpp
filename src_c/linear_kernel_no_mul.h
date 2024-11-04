@@ -1,8 +1,12 @@
+#ifndef LINEAR_KERNEL_H
+#define LINEAR_KERNEL_H
+
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <cmath>
 #include <cstdint>
+#include "bitnet.h"
 
 // Function to quantize activation to 8 bits
 std::pair<std::vector<std::vector<int8_t>>, std::vector<float>> quantize_activation(const std::vector<std::vector<float>> &input, int num_bits) {
@@ -90,4 +94,4 @@ std::vector<std::vector<float>> linear_forward_no_mul(const std::vector<std::vec
     return output;
 }
 
-
+#endif // LINEAR_KERNEL_H

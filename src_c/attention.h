@@ -15,9 +15,10 @@ std::vector<std::vector<float>> bitnet_attention(
     const float k_scale,  // Single scaling factor for K weights
     const float v_scale,  // Single scaling factor for V weights
     const float o_scale,  // Single scaling factor for O weights
-    const std::vector<float> &inv_freq,  // inv_freq for rotary embeddings
-    const std::vector<float> &ln_weight, // weights for RMSNorm
+    const std::vector<float> &inv_freq,  // New: inv_freq for rotary embeddings
+    const std::vector<float> &ln_weight_in, // New: weights for RMSNorm
+    const std::vector<float> &ln_weight, // New: weights for RMSNorm
     size_t hidden_size, size_t num_heads, size_t head_dim, size_t seq_len
-);
+    );
 
 #endif // ATTENTION_H
