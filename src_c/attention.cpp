@@ -143,7 +143,7 @@ std::vector<std::vector<float>> create_causal_mask(size_t seq_len) {
 
 // Function for Bitnet Attention equivalent in C++
 std::vector<std::vector<float>> bitnet_attention(
-    const std::vector<std::vector<float>> &hidden_states,
+    std::vector<std::vector<float>> &hidden_states,
     const std::vector<std::vector<uint8_t>> &q_weights,
     const std::vector<std::vector<uint8_t>> &k_weights,
     const std::vector<std::vector<uint8_t>> &v_weights,

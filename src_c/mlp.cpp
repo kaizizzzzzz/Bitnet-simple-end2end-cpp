@@ -37,7 +37,7 @@ std::vector<float> apply_silu(const std::vector<std::vector<float>>& input) {
 
 // Function for Bitnet MLP equivalent in C++
 std::vector<std::vector<float>> bitnet_mlp(
-    const std::vector<std::vector<float>> &hidden_states,
+    std::vector<std::vector<float>> &hidden_states,
     const std::vector<std::vector<uint8_t>> &gate_weights,
     const std::vector<std::vector<uint8_t>> &up_weights,
     const std::vector<std::vector<uint8_t>> &down_weights,
