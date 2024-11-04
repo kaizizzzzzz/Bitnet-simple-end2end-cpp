@@ -17,7 +17,7 @@ std::vector<std::vector<float>> bitnet_mlp(
     const float mlp2_scale,  // Single scaling factor for mlp2 weights
     const float mlp3_scale,  // Single scaling factor for mlp3 weights
     const std::vector<float> &ln_weight, // New: weights for RMSNorm
-    size_t hidden_size, size_t num_heads, size_t head_dim, size_t seq_len
+    size_t hidden_size, size_t seq_len
     ) {
 
     // Step 1: Quantize the input activations for Q, K, V projections
