@@ -13,13 +13,13 @@ using Tensor2D = std::vector<std::vector<float>>;
 // Function for Bitnet decoder equivalent in C++
 std::vector<std::vector<float>> bitnet_decoder(
     std::vector<std::vector<float>> &hidden_states,
-    const Tensor3D &q_weights_all_layers,
-    const Tensor3D &k_weights_all_layers,
-    const Tensor3D &v_weights_all_layers,
-    const Tensor3D &o_weights_all_layers,
-    const Tensor3D &gate_weights_all_layers,
-    const Tensor3D &up_weights_all_layers,
-    const Tensor3D &down_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &q_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &k_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &v_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &o_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &gate_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &up_weights_all_layers,
+    const std::vector<std::vector<std::vector<uint8_t>>> &down_weights_all_layers,
     const std::vector<float> &q_scales_all_layers,  // Single scaling factor for Q weights
     const std::vector<float> &k_scales_all_layers,  // Single scaling factor for K weights
     const std::vector<float> &v_scales_all_layers,  // Single scaling factor for V weights
@@ -37,5 +37,5 @@ std::vector<std::vector<float>> bitnet_decoder(
     const std::vector<float> &ln_weight_in_final, // New: weights for RMSNorm, final
     const Tensor2D &lm_head_weights, // New: weights for LM head
     );
-    
+
 #endif // BITNET_H
