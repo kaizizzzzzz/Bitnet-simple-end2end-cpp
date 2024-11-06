@@ -3,7 +3,7 @@ import argparse
 import numpy
 import torch
 
-output_id = numpy.fromfile("encoded_prompt.bin", dtype=numpy.int64)
+output_id = numpy.fromfile("encoded_prompt.bin", dtype=numpy.float32)
 output_id = torch.tensor(output_id)
 if output_id[0] == 1: #start token
     output_id = output_id[1:]

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include "embedding.h"
 
 // Define the type for a 3D tensor for simplicity
 using Tensor3D = std::vector<std::vector<std::vector<float>>>;
@@ -35,7 +36,7 @@ std::vector<std::vector<float>> bitnet_decoder(
     size_t hidden_size, size_t intermediate_size, size_t num_heads, size_t head_dim, size_t seq_len, size_t num_layers,
 
     const std::vector<float> &ln_weight_in_final, // New: weights for RMSNorm, final
-    const Tensor2D &lm_head_weights, // New: weights for LM head
+    const Tensor2D &lm_head_weights // New: weights for LM head
     );
 
 #endif // BITNET_H
