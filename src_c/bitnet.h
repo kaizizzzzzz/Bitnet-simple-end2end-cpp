@@ -12,7 +12,8 @@ using Tensor2D = std::vector<std::vector<float>>;
 
 // Function for Bitnet decoder equivalent in C++
 std::vector<std::vector<float>> bitnet_decoder(
-    std::vector<std::vector<float>> &hidden_states,
+    Embedding &embedding_table,
+    const std::vector<float> &input_ids,
     const std::vector<std::vector<std::vector<uint8_t>>> &q_weights_all_layers,
     const std::vector<std::vector<std::vector<uint8_t>>> &k_weights_all_layers,
     const std::vector<std::vector<std::vector<uint8_t>>> &v_weights_all_layers,

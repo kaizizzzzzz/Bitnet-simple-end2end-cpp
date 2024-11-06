@@ -1,0 +1,3 @@
+*.safetensors
+*.bin
+inference/load_model

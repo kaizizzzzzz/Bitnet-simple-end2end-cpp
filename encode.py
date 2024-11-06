@@ -10,4 +10,3 @@ tokenizer = BitnetTokenizer.from_pretrained('1bitLLM/bitnet_b1_58-large', use_fa
 id = tokenizer(args.prompt, return_tensors="pt").input_ids
 id = id[0].cpu().numpy()
 id.tofile("encoded_prompt.bin")
-breakpoint()
