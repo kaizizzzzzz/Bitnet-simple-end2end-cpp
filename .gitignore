@@ -1,3 +1,9 @@
 *.safetensors
 *.bin
 inference/load_model
+# Ignore all files in module_test
+module_test/*
+
+# But do not ignore .h and .cpp files in module_test
+!module_test/*.h
+!module_test/*.cpp

@@ -4,6 +4,15 @@
 #include <vector>
 #include <cstdint>
 
+struct Bitnet_config_1dot58_large{
+    size_t hidden_size = 1536;
+    size_t intermediate_size = 4096;
+    size_t num_heads = 16;
+    size_t head_dim = 96;
+    size_t max_seq_len = 2048;
+    size_t num_layers = 16;
+};
+
 
 // Define the type for a 3D tensor for simplicity
 using Tensor3D = std::vector<std::vector<std::vector<float>>>;
