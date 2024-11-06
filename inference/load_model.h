@@ -9,21 +9,52 @@
 #include <sstream>
 #include <cstdint>
 #include <stdexcept>
+#include "../model_config.h"
 
 struct QuantizedData {
     float scale;
-    std::vector<uint8_t> packed_data;
+    std::vector<std::vector<uint8_t>> packed_data;
 };
 
 struct LayerData {
-    std::unordered_map<std::string, std::vector<float>> float_params;
+    std::unordered_map<std::string, std::vector<float>> float_params_1D;
+    std::unordered_map<std::string, std::vector<std::vector<float>>> float_params_2D;
     std::unordered_map<std::string, QuantizedData> quantized_params;
 };
 
 struct ModelData {
     std::unordered_map<int, LayerData> layers;
-    std::unordered_map<std::string, std::vector<float>> non_layer_params;
+    std::unordered_map<std::string, std::vector<float>> non_layer_params_1D;
+    std::unordered_map<std::string, std::vector<std::vector<float>>> non_layer_params_2D;
 };
+
+template <typename T>
+std::vector<std::vector<T>> reshape_to_2d(const std::vector<T>& data, size_t rows, size_t cols) {
+    if (data.size() != rows * cols) {
+        throw std::invalid_argument("The size of data does not match the specified dimensions.");
+    }
+
+    std::vector<std::vector<T>> reshaped(rows, std::vector<T>(cols));
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            reshaped[i][j] = data[i * cols + j];
+        }
+    }
+    return reshaped;
+}
+
+template <typename T>
+std::vector<std::vector<T>> transpose_2d(const std::vector<std::vector<T>>& data) {
+    size_t rows = data.size();
+    size_t cols = data[0].size();
+    std::vector<std::vector<T>> transposed(cols, std::vector<T>(rows));
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j){
+            transposed[j][i] = data[i][j];
+        }
+    }
+    return transposed;
+}
 
 
 std::pair<std::optional<int>, std::string> parse_name(const std::string& name) {
@@ -76,6 +107,7 @@ std::pair<std::optional<int>, std::string> parse_name(const std::string& name) {
 
 ModelData load_model_from_bin(const std::string& input_bin_path) {
     ModelData model_data;
+    Shape2D reshape_size;
     std::ifstream file(input_bin_path, std::ios::binary);
 
     if (!file) {
@@ -116,9 +148,10 @@ ModelData load_model_from_bin(const std::string& input_bin_path) {
             // Read packed data
             std::vector<uint8_t> packed_data(data_size);
             file.read(reinterpret_cast<char*>(packed_data.data()), data_size);
-
+            std::pair<size_t, size_t> shape = reshape_size.get_shape(weight_name);
+            std::vector<std::vector<uint8_t>> packed_data_2d = reshape_to_2d(packed_data, shape.first, shape.second);
             if (layer_index.has_value()) {
-                model_data.layers[layer_index.value()].quantized_params[weight_name] = {scale, std::move(packed_data)};
+                model_data.layers[layer_index.value()].quantized_params[weight_name] = {scale, std::move(packed_data_2d)};
             } else {
                 throw std::runtime_error("Quantized data must have a layer index. Missing layer index for parameter: " + weight_name);
             }
@@ -127,14 +160,27 @@ ModelData load_model_from_bin(const std::string& input_bin_path) {
             file.read(reinterpret_cast<char*>(&data_size), sizeof(uint32_t));
             std::vector<float> param_data(data_size);
             file.read(reinterpret_cast<char*>(param_data.data()), data_size * sizeof(float));
-            if (layer_index.has_value()) {
-                model_data.layers[layer_index.value()].float_params[weight_name] = std::move(param_data);
-            } else {
-                model_data.non_layer_params[weight_name] = std::move(param_data);
+            try {
+                std::pair<size_t, size_t> shape = reshape_size.get_shape(weight_name);
+                std::vector<std::vector<float>> param_data_2d = reshape_to_2d(param_data, shape.first, shape.second);
+                if (layer_index.has_value()) {
+                    model_data.layers[layer_index.value()].float_params_2D[weight_name] = std::move(param_data_2d);
+                } else {
+                    model_data.non_layer_params_2D[weight_name] = std::move(param_data_2d);
+                }
+            } catch (const std::invalid_argument& e) {
+                std::cerr << weight_name << " is 1D "<< std::endl;
+                if (layer_index.has_value()) {
+                    model_data.layers[layer_index.value()].float_params_1D[weight_name] = std::move(param_data);
+                } else {
+                    model_data.non_layer_params_1D[weight_name] = std::move(param_data);
+                }
             }
         }
     }
-
+    //pay attention to add lm_head
+    std::vector<std::vector<float>> lm_head = transpose_2d(model_data.non_layer_params_2D["embed_tokens"]);
+    model_data.non_layer_params_2D["lm_head"] = std::move(lm_head);
     file.close();
     return model_data;
 }
