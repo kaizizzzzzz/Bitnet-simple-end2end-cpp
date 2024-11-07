@@ -6,15 +6,11 @@
 
 // Function for Bitnet Attention equivalent in C++
 std::vector<std::vector<float>> bitnet_attention(
-    const std::vector<std::vector<float>> &hidden_states,
-    const std::vector<std::vector<uint8_t>> &q_weights,
-    const std::vector<std::vector<uint8_t>> &k_weights,
-    const std::vector<std::vector<uint8_t>> &v_weights,
-    const std::vector<std::vector<uint8_t>> &o_weights,
-    const float q_scale,  // Single scaling factor for Q weights
-    const float k_scale,  // Single scaling factor for K weights
-    const float v_scale,  // Single scaling factor for V weights
-    const float o_scale,  // Single scaling factor for O weights
+    std::vector<std::vector<float>> &hidden_states,
+    const QuantizedData &q_weights,
+    const QuantizedData &k_weights,
+    const QuantizedData &v_weights,
+    const QuantizedData &o_weights,
     const std::vector<float> &inv_freq,  // New: inv_freq for rotary embeddings
     const std::vector<float> &ln_weight_in, // New: weights for RMSNorm
     const std::vector<float> &ln_weight, // New: weights for RMSNorm

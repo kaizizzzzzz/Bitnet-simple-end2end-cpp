@@ -5,7 +5,7 @@
 #include <cstdint>
 
 // RMS Normalization function
-std::vector<float> rms_norm(const std::vector<float> &hidden_states, const std::vector<float> &weight, float epsilon = 1e-6) {
+inline std::vector<float> rms_norm(const std::vector<float> &hidden_states, const std::vector<float> &weight, float epsilon = 1e-6) {
     size_t hidden_size = hidden_states.size();
     float variance = 0.0f;
 

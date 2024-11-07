@@ -144,14 +144,10 @@ std::vector<std::vector<float>> create_causal_mask(size_t seq_len) {
 // Function for Bitnet Attention equivalent in C++
 std::vector<std::vector<float>> bitnet_attention(
     std::vector<std::vector<float>> &hidden_states,
-    const std::vector<std::vector<uint8_t>> &q_weights,
-    const std::vector<std::vector<uint8_t>> &k_weights,
-    const std::vector<std::vector<uint8_t>> &v_weights,
-    const std::vector<std::vector<uint8_t>> &o_weights,
-    const float q_scale,  // Single scaling factor for Q weights
-    const float k_scale,  // Single scaling factor for K weights
-    const float v_scale,  // Single scaling factor for V weights
-    const float o_scale,  // Single scaling factor for O weights
+    const QuantizedData &q_weights,
+    const QuantizedData &k_weights,
+    const QuantizedData &v_weights,
+    const QuantizedData &o_weights,
     const std::vector<float> &inv_freq,  // New: inv_freq for rotary embeddings
     const std::vector<float> &ln_weight_in, // New: weights for RMSNorm
     const std::vector<float> &ln_weight, // New: weights for RMSNorm
@@ -168,9 +164,9 @@ std::vector<std::vector<float>> bitnet_attention(
     std::vector<float> scales = quantized_result.second;
 
     // Step 3: Linear projections for Q, K, V using quantized GEMM (forward_no_mul)
-    std::vector<std::vector<float>> q_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, q_weights, q_scale, hidden_size);
-    std::vector<std::vector<float>> k_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, k_weights, k_scale, hidden_size);
-    std::vector<std::vector<float>> v_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, v_weights, v_scale, hidden_size);
+    std::vector<std::vector<float>> q_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, q_weights, hidden_size);
+    std::vector<std::vector<float>> k_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, k_weights, hidden_size);
+    std::vector<std::vector<float>> v_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, v_weights, hidden_size);
 
     // Reshape Q, K, V for attention calculation
     Tensor3D q_proj = reshape_2D_to_3D(q_proj_re, num_heads, seq_len, head_dim);
@@ -236,7 +232,7 @@ std::vector<std::vector<float>> bitnet_attention(
     std::vector<std::vector<int8_t>> quantized_final_output = quantized_final_result.first;
     std::vector<float> final_scales = quantized_final_result.second;
 
-    std::vector<std::vector<float>> final_output = linear_forward_no_mul(quantized_final_output, final_scales, o_weights, o_scale, hidden_size);
+    std::vector<std::vector<float>> final_output = linear_forward_no_mul(quantized_final_output, final_scales, o_weights, hidden_size);
 
     return final_output;
 }

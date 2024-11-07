@@ -9,27 +9,27 @@
 #include <stdexcept>
 
 //Bitnet_config_1dot58_large
-#define hidden_size 1536
-#define intermediate_size 4096
-#define num_heads 16
-#define head_dim hidden_size / num_heads
-#define max_seq_len 2048
-#define num_layers 16
-#define pack_factor 4
-#define vocab_size 32002
+#define HIDDEN_SIZE 1536
+#define INTERMEDIATE_SIZE 4096
+#define NUM_HEADS 16
+#define HEAD_NUM HIDDEN_SIZE / NUM_HEADS
+#define MAX_SEQ_LEN 2048
+#define NUM_LAYERS 16
+#define PACK_FACTOR 4
+#define VOCAB_SIZE 32002
 
 
 struct Shape2D {
     const std::unordered_map<std::string, std::pair<int, int>> shapes = {
-        {"q_proj", {hidden_size / pack_factor, hidden_size}},
-        {"k_proj", {hidden_size / pack_factor, hidden_size}},
-        {"v_proj", {hidden_size / pack_factor, hidden_size}},
-        {"o_proj", {hidden_size / pack_factor, hidden_size}},
-        {"mlp.up_proj", {hidden_size / pack_factor, intermediate_size}},
-        {"mlp.gate_proj", {hidden_size / pack_factor, intermediate_size}},
-        {"mlp.down_proj", {intermediate_size / pack_factor, hidden_size}},
-        {"embed_tokens", {vocab_size, hidden_size}},
-        {"lm_head", {hidden_size, vocab_size}}
+        {"q_proj", {HIDDEN_SIZE / PACK_FACTOR, HIDDEN_SIZE}},
+        {"k_proj", {HIDDEN_SIZE / PACK_FACTOR, HIDDEN_SIZE}},
+        {"v_proj", {HIDDEN_SIZE / PACK_FACTOR, HIDDEN_SIZE}},
+        {"o_proj", {HIDDEN_SIZE / PACK_FACTOR, HIDDEN_SIZE}},
+        {"mlp.up_proj", {HIDDEN_SIZE / PACK_FACTOR, INTERMEDIATE_SIZE}},
+        {"mlp.gate_proj", {HIDDEN_SIZE / PACK_FACTOR, INTERMEDIATE_SIZE}},
+        {"mlp.down_proj", {INTERMEDIATE_SIZE / PACK_FACTOR, HIDDEN_SIZE}},
+        {"embed_tokens", {VOCAB_SIZE, HIDDEN_SIZE}},
+        {"lm_head", {HIDDEN_SIZE, VOCAB_SIZE}}
     };
 
     std::pair<size_t, size_t> get_shape(const std::string& name) const {
