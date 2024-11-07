@@ -47,14 +47,10 @@ Tensor2D GEMM_2D_float(const Tensor2D &tensor1, const Tensor2D &tensor2) {
     size_t seq_len1 = tensor1.size();
     size_t intermediate_dim1 = tensor1[0].size();
 
-    size_t seq_len2 = tensor2.size();
-    size_t intermediate_dim2 = tensor2[0].size();  // This should match the last dimension of tensor1
+    size_t intermediate_dim2 = tensor2.size();
 
-    if (seq_len1 != seq_len2) {
-        throw std::runtime_error("sequence length in tensor1 and tensor2 must match.");
-    }
     if (intermediate_dim1 != intermediate_dim2) {
-        throw std::runtime_error("intermediate_dim of tensor1 and head dimension of tensor2 must match.");
+        throw std::runtime_error("intermediate_dim of tensor1 and tensor2 must match.");
     }
 
     size_t seq_len = seq_len1;

@@ -65,7 +65,7 @@ std::vector<std::vector<float>> linear_forward_no_mul(const std::vector<std::vec
         for (size_t j = 0; j < output_cols; ++j) {
             for (size_t k = 0; k < input_cols; k += 4) {
                 // Load packed weights for the current column j
-                uint8_t packed_value = packed_weight_col[j][k / 4];
+                uint8_t packed_value = packed_weight_col[k / 4][j];
 
                 // Extract and decode the weights in this column block
                 for (int l = 0; l < 4 && (k + l) < input_cols; ++l) {
