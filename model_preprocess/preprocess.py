@@ -12,7 +12,7 @@ def weight_quant_true(weight, num_bits=2):
 
 def pack_weights_to_int8(quantized_weight):
     # quantized_weight = quantized_weight.to("cpu")
-    packed_shape = (quantized_weight.shape[1] // 4, quantized_weight.shape[0])
+    packed_shape = (quantized_weight.shape[0], quantized_weight.shape[1] // 4)
     quantized_weight_flat = quantized_weight.flatten()
     
     packed_weight = []
@@ -32,6 +32,7 @@ def pack_weights_to_int8(quantized_weight):
     
     packed_weight = np.array(packed_weight, dtype=np.uint8)
     packed_weight = packed_weight.reshape(packed_shape)  # Reorder for C++ usage
+    packed_weight = packed_weight.T
     return packed_weight
 
 def save_model_to_bin(safetensors_path, output_bin_path):
