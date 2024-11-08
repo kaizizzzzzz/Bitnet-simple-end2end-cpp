@@ -81,7 +81,7 @@ std::vector<std::vector<float>> bitnet_decoder(
 
     // Apply final_layernorm
     for (auto &row : hidden_states) {
-        row = rms_norm(row, bitnet_model_data.non_layer_params_1D["norm"]);
+        row = rms_norm(row, bitnet_model_data.non_layer_params_1D["norm"], RMS_NORM_EPS);
     }
 
     // Through LM head for casual inference

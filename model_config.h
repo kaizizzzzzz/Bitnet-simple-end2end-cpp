@@ -14,9 +14,10 @@
 #define NUM_HEADS 16
 #define HEAD_NUM HIDDEN_SIZE / NUM_HEADS
 #define MAX_SEQ_LEN 2048
-#define NUM_LAYERS 16
+#define NUM_LAYERS 24
 #define PACK_FACTOR 4
 #define VOCAB_SIZE 32002
+#define RMS_NORM_EPS 1e-05
 
 
 struct Shape2D {

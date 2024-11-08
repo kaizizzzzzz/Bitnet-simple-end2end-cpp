@@ -165,13 +165,15 @@ std::vector<size_t> casual_inference(ModelData &bitnet_model_data, const int max
         std::cout << "Inference time for " << i << "th token:"<< seconds << "s" << std::endl;
         seq_len++;
     }
+    std::cout << "Total latency: " << latency << "s" << std::endl;
+    std::cout << "Inference Speed: " << latency / seq_len << " seconds / token" << std::endl;
     return total_ids;
 }
 
 int main() {
     ModelData bitnet_model_data = load_model_from_bin("model.bin");
     std::vector<size_t> encoded_id = get_encoded_id("encoded_prompt.bin");
-    std::vector<size_t> total_ids = casual_inference(bitnet_model_data, 3, encoded_id);
+    std::vector<size_t> total_ids = casual_inference(bitnet_model_data, 100, encoded_id);
     save_ids_to_bin(total_ids, "generated_ids.bin");
     return 0;
 }

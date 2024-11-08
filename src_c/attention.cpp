@@ -134,7 +134,7 @@ std::pair<Tensor3D, Tensor3D> apply_rotary_pos_emb(const Tensor3D &q, const Tens
 
 // Helper function to create a causal mask (lower triangular matrix with negative infinity above the diagonal)
 std::vector<std::vector<float>> create_causal_mask(size_t seq_len) {
-    std::vector<std::vector<float>> mask(seq_len, std::vector<float>(seq_len, -std::numeric_limits<float>::infinity()));
+    std::vector<std::vector<float>> mask(seq_len, std::vector<float>(seq_len, -65536));
     for (size_t i = 0; i < seq_len; ++i) {
         for (size_t j = 0; j <= i; ++j) {
             mask[i][j] = 0.0f;  // Keep positions on and below the diagonal as zero
@@ -157,7 +157,7 @@ std::vector<std::vector<float>> bitnet_attention(
     ) {
     // Step 1: Apply input_layernorm
     for (auto &row : hidden_states) {
-        row = rms_norm(row, ln_weight_in);
+        row = rms_norm(row, ln_weight_in, RMS_NORM_EPS);
     }
 
     // Step 2: Quantize the input activations for Q, K, V projections
@@ -225,7 +225,7 @@ std::vector<std::vector<float>> bitnet_attention(
 
     // Step 9: Apply RMS normalization before projection
     for (auto &row : attn_output_2D) {
-        row = rms_norm(row, ln_weight);
+        row = rms_norm(row, ln_weight, RMS_NORM_EPS);
     }
 
     // Step 10: Final output projection using quantized GEMM (forward_no_mul)

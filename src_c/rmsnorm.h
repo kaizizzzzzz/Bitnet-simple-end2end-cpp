@@ -17,9 +17,12 @@ inline std::vector<float> rms_norm(const std::vector<float> &hidden_states, cons
     std::vector<float> normalized_states(hidden_size);
 
     for (size_t i = 0; i < hidden_size; ++i) {
-        normalized_states[i] = (hidden_states[i] / variance) * weight[i];
+        normalized_states[i] = (hidden_states[i] / variance);
     }
 
+    for (size_t i = 0; i < hidden_size; ++i) {
+        normalized_states[i] = normalized_states[i] * weight[i];
+    }
     return normalized_states;
 }
 

@@ -48,7 +48,7 @@ std::vector<std::vector<float>> bitnet_mlp(
     
     // Step 1: Apply post_attention_layernorm
     for (auto &row : hidden_states) {
-        row = rms_norm(row, ln_weight_in);
+        row = rms_norm(row, ln_weight_in, RMS_NORM_EPS);
     }
 
     // Step 2: Quantize the input activations for Q, K, V projections
@@ -68,7 +68,7 @@ std::vector<std::vector<float>> bitnet_mlp(
 
     // Step 6: Apply RMS normalization before down projection
     for (auto &row : gate_up_mul) {
-        row = rms_norm(row, ln_weight);
+        row = rms_norm(row, ln_weight, RMS_NORM_EPS);
     }
 
     //Step 7: projection for down using quantized GEMM (forward_no_mul)
