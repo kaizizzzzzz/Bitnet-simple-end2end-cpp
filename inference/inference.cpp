@@ -7,6 +7,7 @@
 #include <numeric>
 #include <random>
 #include <utility>
+#include <chrono>
 #include "../src_c/bitnet.h"
 #include "../src_c/embedding.h"
 #include "../model_config.h"
@@ -146,10 +147,22 @@ std::vector<size_t> casual_inference(ModelData &bitnet_model_data, const int max
     size_t generated_id;
     // Initialize the embedding table here to avoid repeated initialization
     Embedding embedding_table(bitnet_model_data.non_layer_params_2D["embed_tokens"]);
+    int latency = 0;
     for (size_t i = 0; i < max_length; ++i) {
+        auto start = std::chrono::high_resolution_clock::now();
         logits = bitnet_decoder(embedding_table, bitnet_model_data, total_ids, HIDDEN_SIZE, INTERMEDIATE_SIZE, NUM_HEADS, HEAD_NUM, seq_len, NUM_LAYERS).back();
         generated_id = sample(logits, TEMPERATURE, TOP_K);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        int seconds = duration.count() / 1000;
+        latency += seconds;
         total_ids.push_back(generated_id);
+        std::cout << "Encoded_ID now: ";
+        for (size_t j = 0; j < total_ids.size(); ++j) {
+            std::cout << total_ids[j] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Inference time for " << i << "th token:"<< seconds << "s" << std::endl;
         seq_len++;
     }
     return total_ids;
@@ -158,7 +171,7 @@ std::vector<size_t> casual_inference(ModelData &bitnet_model_data, const int max
 int main() {
     ModelData bitnet_model_data = load_model_from_bin("model.bin");
     std::vector<size_t> encoded_id = get_encoded_id("encoded_prompt.bin");
-    std::vector<size_t> total_ids = casual_inference(bitnet_model_data, 20, encoded_id);
+    std::vector<size_t> total_ids = casual_inference(bitnet_model_data, 3, encoded_id);
     save_ids_to_bin(total_ids, "generated_ids.bin");
     return 0;
 }

@@ -1,5 +1,5 @@
 # Define the compiler and flags
-CXX = g++ -g
+CXX = g++
 CXXFLAGS = -std=c++17
 
 # Define directories

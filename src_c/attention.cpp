@@ -80,8 +80,8 @@ Tensor3D rotate_half(const Tensor3D &x) {
     for (size_t h = 0; h < num_heads; ++h) {
         for (size_t s = 0; s < seq_len; ++s) {
             for (size_t d = 0; d < head_dim / 2; ++d) {
-                rotated_x[h][s][d] = x[h][s][d + head_dim / 2];        // Assign x2 to x1 position
-                rotated_x[h][s][d + head_dim / 2] = -x[h][s][d];       // Assign -x1 to x2 position
+                rotated_x[h][s][d] = - x[h][s][d + head_dim / 2];        // Assign x2 to x1 position
+                rotated_x[h][s][d + head_dim / 2] = x[h][s][d];       // Assign -x1 to x2 position
             }
         }
     }
@@ -90,23 +90,25 @@ Tensor3D rotate_half(const Tensor3D &x) {
 }
 
 // Rotary embedding function (cosine and sine calculations)
-void rotary_embedding(const Tensor3D &x, const std::vector<float> &inv_freq, size_t seq_len, Tensor3D &cos, Tensor3D &sin) {
+void rotary_embedding(const Tensor3D &x, const std::vector<float> &inv_freq, size_t seq_len, Tensor2D &cos, Tensor2D &sin) {
     size_t num_heads = x.size();
     size_t head_dim = x[0][0].size();
     
     for (size_t h = 0; h < num_heads; ++h) {
         for (size_t s = 0; s < seq_len; ++s) {
-            for (size_t d = 0; d < head_dim; ++d) {
-                float angle = inv_freq[d / 2] * s;
-                cos[h][s][d] = std::cos(angle);
-                sin[h][s][d] = std::sin(angle);
+            for (size_t d = 0; d < head_dim / 2; ++d) {
+                float angle = inv_freq[d] * s;
+                cos[s][d] = std::cos(angle);
+                cos[s][d + head_dim / 2] = cos[s][d];
+                sin[s][d] = std::sin(angle);
+                sin[s][d + head_dim / 2] = sin[s][d];
             }
         }
     }
 }
 
 // Apply rotary position embedding to Q and K tensors
-std::pair<Tensor3D, Tensor3D> apply_rotary_pos_emb(const Tensor3D &q, const Tensor3D &k, const Tensor3D &cos, const Tensor3D &sin) {
+std::pair<Tensor3D, Tensor3D> apply_rotary_pos_emb(const Tensor3D &q, const Tensor3D &k, const Tensor2D &cos, const Tensor2D &sin) {
     Tensor3D q_embed = q;
     Tensor3D k_embed = k;
 
@@ -120,8 +122,8 @@ std::pair<Tensor3D, Tensor3D> apply_rotary_pos_emb(const Tensor3D &q, const Tens
     for (size_t h = 0; h < num_heads; ++h) {
         for (size_t s = 0; s < seq_len; ++s) {
             for (size_t d = 0; d < head_dim; ++d) {
-                q_embed[h][s][d] = q[h][s][d] * cos[h][s][d] + rotated_q[h][s][d] * sin[h][s][d];
-                k_embed[h][s][d] = k[h][s][d] * cos[h][s][d] + rotated_k[h][s][d] * sin[h][s][d];
+                q_embed[h][s][d] = q[h][s][d] * cos[s][d] + rotated_q[h][s][d] * sin[s][d];
+                k_embed[h][s][d] = k[h][s][d] * cos[s][d] + rotated_k[h][s][d] * sin[s][d];
             }
         }
     }
@@ -174,8 +176,8 @@ std::vector<std::vector<float>> bitnet_attention(
     Tensor3D v_proj = reshape_2D_to_3D(v_proj_re, num_heads, seq_len, head_dim);
             
     // Step 4: Apply rotary embedding
-    Tensor3D cos(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
-    Tensor3D sin(num_heads, std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
+    Tensor2D cos(std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
+    Tensor2D sin(std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
     rotary_embedding(q_proj, inv_freq, seq_len, cos, sin);
     auto q_k_embed_pair = apply_rotary_pos_emb(q_proj, k_proj, cos, sin);
     Tensor3D q_embed = q_k_embed_pair.first;

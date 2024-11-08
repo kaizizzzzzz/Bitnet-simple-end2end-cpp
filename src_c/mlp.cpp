@@ -60,20 +60,20 @@ std::vector<std::vector<float>> bitnet_mlp(
     std::vector<std::vector<float>> gate_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, gate_weights, intermediate_size);
     std::vector<std::vector<float>> up_proj_re = linear_forward_no_mul(quantized_hidden_states, scales, up_weights, intermediate_size);
 
-    //Step 4: Hadmard product between gate and up
-    std::vector<std::vector<float>> gate_up_mul = element_mul_2D_float(gate_proj_re, up_proj_re);
+    //Step 4: Apply SiLU activation
+    std::vector<std::vector<float>> gate_silu = apply_silu(gate_proj_re);
 
-    //Step 5: Apply SiLU activation
-    std::vector<std::vector<float>> gate_up_mul_silu = apply_silu(gate_up_mul);
+    //Step 5: Hadmard product between gate and up
+    std::vector<std::vector<float>> gate_up_mul = element_mul_2D_float(gate_silu, up_proj_re);
 
     // Step 6: Apply RMS normalization before down projection
-    for (auto &row : gate_up_mul_silu) {
+    for (auto &row : gate_up_mul) {
         row = rms_norm(row, ln_weight);
     }
 
     //Step 7: projection for down using quantized GEMM (forward_no_mul)
     // Quantize the activation for down projection Linear
-    auto quantized_result2 = quantize_activation(gate_up_mul_silu, 8);
+    auto quantized_result2 = quantize_activation(gate_up_mul, 8);
     std::vector<std::vector<int8_t>> quantized_hidden_states2 = quantized_result2.first;
     std::vector<float> scales2 = quantized_result2.second;
 

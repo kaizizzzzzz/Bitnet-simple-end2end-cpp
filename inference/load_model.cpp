@@ -149,7 +149,7 @@ ModelData load_model_from_bin(const std::string& input_bin_path) {
                     model_data.non_layer_params_2D[weight_name] = std::move(param_data_2d);
                 }
             } catch (const std::invalid_argument& e) {
-                std::cerr << weight_name << " is 1D "<< std::endl;
+                // std::cerr << weight_name << " is 1D "<< std::endl;
                 if (layer_index.has_value()) {
                     model_data.layers[layer_index.value()].float_params_1D[weight_name] = std::move(param_data);
                 } else {
