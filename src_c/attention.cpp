@@ -31,6 +31,26 @@ Tensor3D reshape_2D_to_3D(const std::vector<std::vector<float>> &input, size_t n
     return output;
 }
 
+void cache_update(std::vector<std::vector<std::vector<float>>> &cache, const std::vector<std::vector<std::vector<float>>> &new_data) {
+    if (cache.empty()) {
+        std::cerr << "Cache is empty, cannot update" << std::endl;
+    } 
+    if (new_data[0].size() != 1) {
+        std::cerr << "New data must be a single row" << std::endl;
+    }
+    // Ensure `a` and `b` have compatible shapes
+    size_t h = cache.size();
+    if (h != new_data.size() || new_data[0].size() != 1 || cache[0][0].size() != new_data[0][0].size()) {
+        throw std::invalid_argument("Incompatible dimensions for concatenation.");
+    }
+
+    // Append each `b[i][0]` to `a[i]`
+    for (size_t i = 0; i < h; ++i) {
+        cache[i].push_back(new_data[i][0]);  // Append `1 x d` vector `b[i][0]` to `a[i]`
+    }
+    return;
+}
+
 // Transpose last two dimensions for the K matrix
 // Converts [num_heads, seq_len, head_dim] -> [num_heads, head_dim, seq_len]
 Tensor3D transpose_last_two_dims(const Tensor3D &input) {
@@ -90,14 +110,25 @@ Tensor3D rotate_half(const Tensor3D &x) {
 }
 
 // Rotary embedding function (cosine and sine calculations)
-void rotary_embedding(const Tensor3D &x, const std::vector<float> &inv_freq, size_t seq_len, Tensor2D &cos, Tensor2D &sin) {
+void rotary_embedding(const Tensor3D &x, const std::vector<float> &inv_freq, size_t seq_len, Tensor2D &cos, Tensor2D &sin, size_t p_id, std::string mode = "prefill") {
     size_t num_heads = x.size();
     size_t head_dim = x[0][0].size();
-    
+    float angle;
     for (size_t h = 0; h < num_heads; ++h) {
         for (size_t s = 0; s < seq_len; ++s) {
             for (size_t d = 0; d < head_dim / 2; ++d) {
-                float angle = inv_freq[d] * s;
+                if (mode == "prefill"){
+                    angle = inv_freq[d] * s;
+                }
+                else if (mode == "decoding"){
+                    if (seq_len != 1) {
+                        std::cerr << "Sequence length must be 1 for decoding mode" << std::endl;
+                    }
+                    angle = inv_freq[d] * p_id;
+                }
+                else{
+                    std::cerr << "Invalid mode" << std::endl;
+                }
                 cos[s][d] = std::cos(angle);
                 cos[s][d + head_dim / 2] = cos[s][d];
                 sin[s][d] = std::sin(angle);
@@ -153,8 +184,29 @@ std::vector<std::vector<float>> bitnet_attention(
     const std::vector<float> &inv_freq,  // New: inv_freq for rotary embeddings
     const std::vector<float> &ln_weight_in, // New: weights for RMSNorm
     const std::vector<float> &ln_weight, // New: weights for RMSNorm
-    size_t hidden_size, size_t num_heads, size_t head_dim, size_t seq_len
+    size_t hidden_size, size_t num_heads, size_t head_dim, size_t seq_len,
+    std::vector<std::vector<std::vector<float>>> &k_cache,
+    std::vector<std::vector<std::vector<float>>> &v_cache,
+    size_t p_id,
+    std::string mode
     ) {
+    
+    if (mode == "prefill"){
+        if (seq_len == 1) {
+           if (p_id != 0) {
+               std::cerr << "Position ID must be 0 for prefill mode's first token" << std::endl;
+           }
+        }
+    }
+    else if (mode == "decoding"){
+        if (hidden_states.size() != 1) {
+            std::cerr << "Hidden states must be a single row for decoding mode" << std::endl;
+        }
+    }
+    else{
+        std::cerr << "Invalid mode" << std::endl;
+    }
+
     // Step 1: Apply input_layernorm
     for (auto &row : hidden_states) {
         row = rms_norm(row, ln_weight_in, RMS_NORM_EPS);
@@ -178,10 +230,24 @@ std::vector<std::vector<float>> bitnet_attention(
     // Step 4: Apply rotary embedding
     Tensor2D cos(std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
     Tensor2D sin(std::vector<std::vector<float>>(seq_len, std::vector<float>(head_dim)));
-    rotary_embedding(q_proj, inv_freq, seq_len, cos, sin);
+    rotary_embedding(q_proj, inv_freq, seq_len, cos, sin, p_id, mode);
     auto q_k_embed_pair = apply_rotary_pos_emb(q_proj, k_proj, cos, sin);
     Tensor3D q_embed = q_k_embed_pair.first;
     Tensor3D k_embed = q_k_embed_pair.second;
+
+    if (mode == "prefill"){
+        k_cache = k_embed;
+        v_cache = v_proj;
+    }
+    else if (mode == "decoding"){
+        cache_update(k_cache, k_embed);
+        cache_update(v_cache, v_proj);
+        k_embed = k_cache;
+        v_proj = v_cache;
+    }
+    else{
+        std::cerr << "Invalid mode" << std::endl;
+    }
 
     // Step 5: Transpose K for correct multiplication
     Tensor3D k_proj_transposed = transpose_last_two_dims(k_embed);
